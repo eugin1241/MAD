@@ -1,0 +1,7 @@
+{
+  "name": "klabox-demo-api",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Local json-server backend for the mobile development final project",
+  "dependencies": {"json-server": "0.17.4"}
+}

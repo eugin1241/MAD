@@ -1,0 +1,38 @@
+{
+  "profiles": [],
+  "categories": [
+    {
+      "id": "electronics",
+      "name": "Elektronik"
+    },
+    {
+      "id": "fashion",
+      "name": "Fashion"
+    },
+    {
+      "id": "books",
+      "name": "Buku & Kuliah"
+    },
+    {
+      "id": "home",
+      "name": "Rumah & Kos"
+    },
+    {
+      "id": "sports",
+      "name": "Olahraga"
+    },
+    {
+      "id": "other",
+      "name": "Lainnya"
+    }
+  ],
+  "products": [],
+  "favorites": [],
+  "conversations": [],
+  "messages": [],
+  "orders": [],
+  "reviews": [],
+  "tickets": [],
+  "ticketMessages": [],
+  "reports": []
+}
