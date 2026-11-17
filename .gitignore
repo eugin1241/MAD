@@ -79,7 +79,6 @@ yarn-error.log
 .marketplace-backups/
 /db.json
 /server/marketplace.json
-/src/config/firebase.js
 .env
 .env.*
 !.env.example
