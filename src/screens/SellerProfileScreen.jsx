@@ -2,6 +2,7 @@ import React from 'react';
 import {StyleSheet, Text, View} from 'react-native';
 import {useMarketplace} from '../context/MarketplaceContext';
 import {
+  Badge,
   Body,
   Button,
   Card,
@@ -11,7 +12,12 @@ import {
   Screen,
   Title,
 } from '../components/MarketplaceUI';
-import {dateLabel, money, ratingFor} from '../utils/marketplace';
+import {
+  dateLabel,
+  money,
+  productBadgeStatus,
+  ratingFor,
+} from '../utils/marketplace';
 
 export default function SellerProfileScreen({route, navigation}) {
   const {sellerId} = route.params || {};
@@ -53,7 +59,7 @@ export default function SellerProfileScreen({route, navigation}) {
               </View>
             </Row>
           </Card>
-          <Title subtitle={`${products.length} barang tersedia di lapak`}>
+          <Title subtitle={`${products.length} barang terdaftar di lapak`}>
             Barang penjual
           </Title>
           {!products.length ? (
@@ -70,6 +76,7 @@ export default function SellerProfileScreen({route, navigation}) {
                   <Text style={styles.productTitle}>{product.title}</Text>
                   <Body>{money(product.price)}</Body>
                   <Body muted>{product.condition}</Body>
+                  <Badge status={productBadgeStatus(product)} />
                 </View>
               </Row>
               <Button

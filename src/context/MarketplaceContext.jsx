@@ -103,7 +103,16 @@ export function MarketplaceProvider({children}) {
   const profile = data.profiles.find(item => item.id === user?.uid);
   return (
     <Context.Provider
-      value={{user, profile, data, loading, error, refresh, actions}}
+      value={{
+        user,
+        profile,
+        data,
+        loading,
+        error,
+        refresh,
+        actions,
+        uploadProductImage: api.uploadImage,
+      }}
     >
       {children}
     </Context.Provider>

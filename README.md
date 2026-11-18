@@ -37,6 +37,8 @@ npm run android
 
 Daftar melalui aplikasi, kemudian mulai menambahkan barang. Server otomatis membuat `server/marketplace.json` dari template pada pemakaian pertama. Katalog awal kosong dengan kategori tersedia; database yang sudah ada tidak ditimpa.
 
+Form jual barang dapat memilih satu foto dari galeri (JPG, PNG, atau WebP, maksimal 5 MB). Foto disimpan oleh server lokal di `server/public/uploads`; biarkan `npm run server` tetap berjalan agar foto dapat diunggah dan dilihat oleh perangkat yang memakai server tersebut.
+
 ## Firebase bersama dan data marketplace
 
 Firebase menyimpan akun login bersama. Produk, profil marketplace, peran admin, chat, dan pesanan berada di json-server lokal pada masing-masing komputer. Menjalankan server masing-masing berarti data marketplace terpisah, meskipun Firebase-nya sama.

@@ -47,10 +47,17 @@ test('seller submits pending; only admin approves; important edits require appro
 });
 test('validation rejects bad currency, stock, category, and photo URLs', async () => {
   const f = fixture(); f.as('seller');
-  for (const changes of [{price: -1}, {price: 'abc'}, {stock: 1.2}, {categoryId: 'missing'}, {imageUrl: 'javascript:bad'}]) {
+  for (const changes of [{price: -1}, {price: 'abc'}, {stock: 1.2}, {categoryId: 'missing'}, {imageUrl: 'javascript:bad'}, {imageUrl: '/uploads/../private.jpg'}]) {
     await assert.rejects(f.actions.saveProduct({...form, ...changes}));
   }
   assert.equal(f.db.products.length, 1);
+});
+test('a gallery upload path can be saved as a product photo', async () => {
+  const f = fixture();
+  f.as('seller');
+  const imageUrl = '/uploads/51abc123-1234-4321-9234-123456789abc.jpg';
+  const product = await f.actions.saveProduct({...form, imageUrl});
+  assert.equal(product.imageUrl, imageUrl);
 });
 test('rejection requires reason; removal preserves order snapshots', async () => {
   const f = fixture(); const order = await f.actions.placeOrder('item', details);
@@ -71,6 +78,22 @@ test('cannot buy own, pending, removed, or out-of-stock product', async () => {
   }
   f.db.products[0].status = 'approved'; f.db.products[0].stock = 0;
   await assert.rejects(f.actions.placeOrder('item', details), /tersedia/);
+});
+test('seller controls sold status and sold listings cannot be ordered or newly messaged', async () => {
+  const f = fixture();
+  await assert.rejects(
+    f.actions.setProductSaleStatus('item', 'sold'),
+    /barang sendiri/,
+  );
+  f.as('seller');
+  await f.actions.setProductSaleStatus('item', 'sold');
+  assert.equal(f.db.products[0].saleStatus, 'sold');
+  f.as('buyer');
+  await assert.rejects(f.actions.placeOrder('item', details), /tidak tersedia/);
+  await assert.rejects(f.actions.startConversation('item'), /tidak tersedia/);
+  f.as('seller');
+  await f.actions.setProductSaleStatus('item', 'available');
+  assert.equal(f.db.products[0].saleStatus, 'available');
 });
 test('reservation consumes stock; cancellation returns it; price is frozen', async () => {
   const f = fixture(); const order = await f.actions.placeOrder('item', details);

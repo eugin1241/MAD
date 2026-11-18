@@ -14,6 +14,7 @@ import {
   View,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
+import {API_BASE_URL} from '../config/marketplace';
 
 export const colors = {
   background: '#F6F5F0',
@@ -155,6 +156,8 @@ export function Chips({options, value, onChange}) {
 const labels = {
   pending: 'Menunggu',
   approved: 'Tayang',
+  available: 'Belum terjual',
+  sold: 'Terjual',
   rejected: 'Ditolak',
   removed: 'Dihapus',
   confirmed: 'Disetujui penjual',
@@ -184,15 +187,18 @@ export function Empty({title, description}) {
 }
 export function ProductImage({uri, size = 100}) {
   const [failedUri, setFailedUri] = useState(null);
+  const imageUri = uri?.startsWith('/uploads/')
+    ? API_BASE_URL + uri
+    : uri;
   const dimensions = {
     width: size,
     height: typeof size === 'number' ? size : 210,
   };
-  return uri && uri !== failedUri ? (
+  return imageUri && imageUri !== failedUri ? (
     <Image
       accessibilityLabel="Foto produk"
-      source={{uri}}
-      onError={() => setFailedUri(uri)}
+      source={{uri: imageUri}}
+      onError={() => setFailedUri(imageUri)}
       style={[styles.image, dimensions]}
     />
   ) : (

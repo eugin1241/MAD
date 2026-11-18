@@ -17,6 +17,12 @@ const availableStock = (product, orders = []) =>
           order.productId === product?.id && order.status !== 'cancelled',
       ).length,
   );
+const productBadgeStatus = product =>
+  product?.status === 'approved'
+    ? product.saleStatus === 'sold'
+      ? 'sold'
+      : 'available'
+    : product?.status;
 const ratingFor = (sellerId, reviews = []) => {
   const rows = reviews.filter(review => review.sellerId === sellerId);
   return {
@@ -34,4 +40,11 @@ const unreadCount = (conversationId, userId, messages = []) =>
       message.senderId !== userId &&
       !(message.readBy || []).includes(userId),
   ).length;
-module.exports = {money, dateLabel, availableStock, ratingFor, unreadCount};
+module.exports = {
+  money,
+  dateLabel,
+  availableStock,
+  productBadgeStatus,
+  ratingFor,
+  unreadCount,
+};

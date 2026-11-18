@@ -16,6 +16,7 @@ import {
   availableStock,
   dateLabel,
   money,
+  productBadgeStatus,
   ratingFor,
 } from '../utils/marketplace';
 
@@ -57,7 +58,8 @@ export default function ProductDetailsScreen({navigation, route}) {
   const isFavorite = data.favorites.some(
     item => item.userId === user.uid && item.productId === product.id,
   );
-  const available = product.status === 'approved';
+  const available =
+    product.status === 'approved' && product.saleStatus !== 'sold';
 
   return (
     <Screen refreshing={loading} onRefresh={refresh}>
@@ -66,15 +68,19 @@ export default function ProductDetailsScreen({navigation, route}) {
       </View>
       <View style={styles.tags}>
         <Text style={styles.category}>{category?.name || 'Lainnya'}</Text>
-        <Badge status={product.status} />
+        <Badge status={productBadgeStatus(product)} />
       </View>
       <Title subtitle={`${product.condition} · ${product.location}`}>
         {product.title}
       </Title>
       <Text style={styles.price}>{money(product.price)}</Text>
       <Body muted>
-        {stock > 0 ? `${stock} unit tersedia` : 'Stok habis'} · Ditambahkan{' '}
-        {dateLabel(product.createdAt)}
+        {product.saleStatus === 'sold'
+          ? 'Barang ini sudah terjual'
+          : stock > 0
+          ? `${stock} unit tersedia`
+          : 'Stok habis'}{' '}
+        · Ditambahkan {dateLabel(product.createdAt)}
       </Body>
       {product.rejectionReason && product.status === 'rejected' ? (
         <Card>
@@ -110,6 +116,22 @@ export default function ProductDetailsScreen({navigation, route}) {
           <Body muted>
             Perubahan barang akan dikirim kembali untuk diperiksa admin.
           </Body>
+          {product.status === 'approved' && (
+            <Button
+              title={
+                product.saleStatus === 'sold'
+                  ? 'Tandai belum terjual'
+                  : 'Tandai terjual'
+              }
+              variant="secondary"
+              onPress={() =>
+                actions.setProductSaleStatus(
+                  product.id,
+                  product.saleStatus === 'sold' ? 'available' : 'sold',
+                )
+              }
+            />
+          )}
           {product.status !== 'removed' && (
             <>
               <Button

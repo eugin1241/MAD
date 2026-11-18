@@ -13,7 +13,11 @@ import {
   Screen,
   Title,
 } from '../components/MarketplaceUI';
-import {money, ratingFor} from '../utils/marketplace';
+import {
+  money,
+  productBadgeStatus,
+  ratingFor,
+} from '../utils/marketplace';
 
 export default function ProfileScreen({navigation}) {
   const {user, profile, data, loading, error, refresh} = useMarketplace();
@@ -78,7 +82,12 @@ export default function ProfileScreen({navigation}) {
           </View>
           <View style={styles.stat}>
             <Text style={styles.value}>
-              {listings.filter(item => item.status === 'approved').length}
+              {
+                listings.filter(
+                  item =>
+                    item.status === 'approved' && item.saleStatus !== 'sold',
+                ).length
+              }
             </Text>
             <Body muted>Barang aktif</Body>
           </View>
@@ -130,7 +139,7 @@ export default function ProfileScreen({navigation}) {
               <View style={styles.flex}>
                 <Text style={styles.productTitle}>{product.title}</Text>
                 <Body>{money(product.price)}</Body>
-                <Badge status={product.status} />
+                <Badge status={productBadgeStatus(product)} />
               </View>
             </Row>
             {product.rejectionReason ? (

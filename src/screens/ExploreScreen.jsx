@@ -9,10 +9,15 @@ import {
   Field,
   Chips,
   Empty,
+  Badge,
   ProductImage,
   Body,
 } from '../components/MarketplaceUI';
-import {availableStock, money} from '../utils/marketplace';
+import {
+  availableStock,
+  money,
+  productBadgeStatus,
+} from '../utils/marketplace';
 
 export function ProductCard({product, orders, onPress, footer}) {
   const stock = availableStock(product, orders);
@@ -37,6 +42,7 @@ export function ProductCard({product, orders, onPress, footer}) {
           <Text style={styles.location} numberOfLines={1}>
             {product.location || 'Lokasi belum diisi'}
           </Text>
+          <Badge status={productBadgeStatus(product)} />
         </View>
       </Pressable>
       {footer}

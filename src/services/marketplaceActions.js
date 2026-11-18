@@ -28,8 +28,10 @@ const find = (rows, id, label) => {
 const photo = value => {
   const url = String(value || '').trim();
   assert(
-    !url || /^https:\/\/[^\s]+$/i.test(url),
-    'Foto harus berupa tautan HTTPS.',
+    !url ||
+      /^https:\/\/[^\s]+$/i.test(url) ||
+      /^\/uploads\/[a-f0-9-]+\.(?:jpg|png|webp)$/i.test(url),
+    'Foto harus berupa tautan HTTPS atau foto yang diunggah.',
   );
   return url;
 };
@@ -66,6 +68,9 @@ function createActions({api, getUser, onChanged = async () => {}}) {
         condition: form.condition,
         location: text(form.location, 'Lokasi', 150),
         imageUrl: photo(form.imageUrl),
+        saleStatus: productId
+          ? find(data.products, productId, 'Barang').saleStatus || 'available'
+          : 'available',
         status: 'pending',
         rejectionReason: '',
         updatedAt: now(),
@@ -96,6 +101,22 @@ function createActions({api, getUser, onChanged = async () => {}}) {
         sellerId: actor.id,
         createdAt: now(),
       });
+    },
+    async setProductSaleStatus(data, actor, id, status) {
+      assert(
+        ['available', 'sold'].includes(status),
+        'Status ketersediaan barang tidak valid.',
+      );
+      const product = find(data.products, id, 'Barang');
+      assert(
+        product.sellerId === actor.id,
+        'Anda hanya boleh mengubah status barang sendiri.',
+      );
+      assert(
+        product.status === 'approved',
+        'Hanya barang yang sudah disetujui yang dapat diubah statusnya.',
+      );
+      return api.patch('products/' + id, {saleStatus: status, updatedAt: now()});
     },
     async moderateProduct(data, actor, id, status, reason) {
       assert(
@@ -140,7 +161,10 @@ function createActions({api, getUser, onChanged = async () => {}}) {
         return api.remove('favorites/' + existing.id);
       }
       const product = find(data.products, productId, 'Barang');
-      assert(product.status === 'approved', 'Barang sudah tidak tersedia.');
+      assert(
+        product.status === 'approved' && product.saleStatus !== 'sold',
+        'Barang sudah tidak tersedia.',
+      );
       return api.post('favorites', {
         id: actor.id + '-' + productId,
         userId: actor.id,
@@ -159,7 +183,10 @@ function createActions({api, getUser, onChanged = async () => {}}) {
       if (existing) {
         return existing;
       }
-      assert(product.status === 'approved', 'Barang sudah tidak tersedia.');
+      assert(
+        product.status === 'approved' && product.saleStatus !== 'sold',
+        'Barang sudah tidak tersedia.',
+      );
       return api.post('conversations', {
         id: actor.id + '-' + productId,
         productId,
@@ -218,6 +245,7 @@ function createActions({api, getUser, onChanged = async () => {}}) {
       );
       assert(
         product.status === 'approved' &&
+          product.saleStatus !== 'sold' &&
           availableStock(product, data.orders) > 0,
         'Barang sudah habis atau tidak tersedia.',
       );

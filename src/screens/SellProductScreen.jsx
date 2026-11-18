@@ -1,5 +1,6 @@
 import React, {useEffect, useRef, useState} from 'react';
 import {Alert, StyleSheet, Text, View} from 'react-native';
+import {launchImageLibrary} from 'react-native-image-picker';
 import {useMarketplace} from '../context/MarketplaceContext';
 import {
   Screen,
@@ -13,7 +14,11 @@ import {
   ProductImage,
   Body,
 } from '../components/MarketplaceUI';
-import {availableStock, money} from '../utils/marketplace';
+import {
+  availableStock,
+  money,
+  productBadgeStatus,
+} from '../utils/marketplace';
 
 const blankForm = location => ({
   title: '',
@@ -27,16 +32,48 @@ const blankForm = location => ({
 });
 
 export default function SellProductScreen({navigation, route}) {
-  const {user, profile, data, actions, loading, refresh} = useMarketplace();
+  const {
+    user,
+    profile,
+    data,
+    actions,
+    loading,
+    refresh,
+    uploadProductImage,
+  } = useMarketplace();
   const productId = route?.params?.productId;
   const product = data.products.find(item => item.id === productId);
   const hydrated = useRef(null);
   const [form, setForm] = useState(() => blankForm(profile?.location));
+  const [selectedImage, setSelectedImage] = useState(null);
   const ownProducts = data.products
     .filter(item => item.sellerId === user.uid)
     .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
   const update = (key, value) =>
     setForm(previous => ({...previous, [key]: value}));
+  const selectPhoto = async () => {
+    const result = await launchImageLibrary({
+      mediaType: 'photo',
+      selectionLimit: 1,
+      maxWidth: 1600,
+      maxHeight: 1600,
+      quality: 0.8,
+    });
+    if (result.didCancel) {
+      return;
+    }
+    if (result.errorCode) {
+      throw new Error(result.errorMessage || 'Foto tidak dapat dipilih.');
+    }
+    const image = result.assets?.[0];
+    if (!image?.uri) {
+      throw new Error('Foto yang dipilih tidak dapat dibaca.');
+    }
+    if (image.fileSize > 5 * 1024 * 1024) {
+      throw new Error('Ukuran foto maksimal 5 MB.');
+    }
+    setSelectedImage(image);
+  };
 
   useEffect(() => {
     if (productId && product && hydrated.current !== productId) {
@@ -50,9 +87,11 @@ export default function SellProductScreen({navigation, route}) {
         location: product.location,
         imageUrl: product.imageUrl || '',
       });
+      setSelectedImage(null);
       hydrated.current = productId;
     } else if (!productId && hydrated.current) {
       setForm(blankForm(profile?.location));
+      setSelectedImage(null);
       hydrated.current = null;
     }
   }, [productId, product, profile?.location]);
@@ -93,21 +132,24 @@ export default function SellProductScreen({navigation, route}) {
     if (!Number.isSafeInteger(Number(form.stock)) || Number(form.stock) < 1) {
       throw new Error('Stok harus berupa jumlah bulat minimal 1.');
     }
-    if (
-      form.imageUrl.trim() &&
-      !/^https:\/\/\S+$/i.test(form.imageUrl.trim())
-    ) {
-      throw new Error(
-        'Gunakan URL foto yang diawali https:// atau kosongkan kolom foto.',
-      );
-    }
+    const imageUrl = selectedImage
+      ? await uploadProductImage(selectedImage)
+      : form.imageUrl;
     await actions.saveProduct(
-      {...form, price: Number(form.price), stock: Number(form.stock)},
+      {
+        ...form,
+        imageUrl,
+        price: Number(form.price),
+        stock: Number(form.stock),
+      },
       productId,
     );
     if (!productId) {
       setForm(blankForm(profile?.location));
+    } else {
+      setForm(previous => ({...previous, imageUrl}));
     }
+    setSelectedImage(null);
     Alert.alert(
       'Barang diajukan',
       'Admin akan memeriksa barangmu. Barang akan tampil di marketplace setelah disetujui.',
@@ -205,22 +247,22 @@ export default function SellProductScreen({navigation, route}) {
           onChangeText={value => update('location', value)}
           maxLength={180}
         />
-        <Field
-          label="URL foto (opsional, HTTPS)"
-          placeholder="https://.../foto-barang.jpg"
-          autoCapitalize="none"
-          autoCorrect={false}
-          keyboardType="url"
-          value={form.imageUrl}
-          onChangeText={value => update('imageUrl', value)}
-          maxLength={2000}
+        <Button
+          title={
+            selectedImage || form.imageUrl
+              ? 'Pilih foto lain dari galeri'
+              : 'Pilih foto dari galeri'
+          }
+          variant="secondary"
+          onPress={selectPhoto}
         />
-        <Body muted>
-          Masukkan tautan langsung ke gambar yang dapat diakses publik.
-        </Body>
-        {!!form.imageUrl && (
+        <Body muted>Opsional · Pilih satu foto JPG, PNG, atau WebP (maks. 5 MB).</Body>
+        {!!(selectedImage?.uri || form.imageUrl) && (
           <View style={styles.preview}>
-            <ProductImage uri={form.imageUrl} size={160} />
+            <ProductImage
+              uri={selectedImage?.uri || form.imageUrl}
+              size={160}
+            />
           </View>
         )}
         <Button
@@ -249,7 +291,7 @@ export default function SellProductScreen({navigation, route}) {
                   <Body>{money(item.price)}</Body>
                 </View>
               </View>
-              <Badge status={item.status} />
+              <Badge status={productBadgeStatus(item)} />
               {item.status === 'rejected' && (
                 <Body muted>
                   Alasan:{' '}

@@ -79,6 +79,7 @@ yarn-error.log
 .marketplace-backups/
 /db.json
 /server/marketplace.json
+/server/public/uploads/
 .env
 .env.*
 !.env.example
